@@ -2304,6 +2304,23 @@ function BlinkIdOverlaySettings() {
       * If null, default value will be used.
      */
      this.errorDocumentTooCloseToEdge = null;
+
+     /**
+      * IOS ONLY - Instruction for cameraPreset to use
+      * If null, default value will be used,
+      * other wise:
+      * 
+      * 0 -  MBCameraPreset480p,
+      * 1 - MBCameraPreset720p,
+      * 2 - MBCameraPreset1080p,
+      * 3 - MBCameraPreset4K,
+      * 4 - MBCameraPresetOptimal,
+      * 5 - MBCameraPresetMax,
+      * 6 - MBCameraPresetPhoto
+      * 
+      * See MBCameraSettings.h for Enum Def
+      */
+     this.cameraPreset = null;
 }
 BlinkIdOverlaySettings.prototype = new OverlaySettings();
 

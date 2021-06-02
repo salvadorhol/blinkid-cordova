@@ -151,6 +151,13 @@
         }
     }
 
+   {
+        id cameraPreset = [jsonOverlaySettings valueForKey:@"cameraPreset"];
+        if (cameraPreset != nil) {
+            sett.cameraSettings.cameraPreset = [ cameraPreset intValue];
+        }
+    }
+
     return [[MBBlinkIdOverlayViewController alloc] initWithSettings:sett recognizerCollection:recognizerCollection delegate:self];
 }
 
