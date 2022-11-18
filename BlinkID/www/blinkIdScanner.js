@@ -211,7 +211,9 @@ BlinkID.prototype.MrtdDocumentType = Object.freeze(
         /** US Green Card */
         GreenCard : 5,
         /** Malaysian PASS type IMM13P */
-        MalaysianPassIMM13P : 6
+        MalaysianPassIMM13P : 6,
+        /** Border Crossing Card */
+        BorderCrossingCard: 7
     }
 );
 
@@ -226,20 +228,22 @@ BlinkID.prototype.IdBarcodeDocumentType = Object.freeze(
         AAMVACompliant: 2,
         /** Argentina ID document was scanned */
         ArgentinaID: 3,
+        /** ArgentinaAlienID document was scanned */
+        ArgentinaAlienID: 4,
         /** Argentina driver license document was scanned */
-        ArgentinaDL: 4,
+        ArgentinaDL: 5,
         /** Colombia ID document was scanned */
-        ColombiaID: 5,
+        ColombiaID: 6,
         /** Colombia driver license document was scanned */
-        ColombiaDL: 6,
+        ColombiaDL: 7,
         /** NigeriaVoter ID document was scanned */
-        NigeriaVoterID: 7,
+        NigeriaVoterID: 8,
         /** Nigeria driver license document was scanned */
-        NigeriaDL: 8,
+        NigeriaDL: 9,
         /** Panama ID document was scanned */
-        PanamaID: 9,
+        PanamaID: 10,
         /** SouthAfrica ID document was scanned */
-        SouthAfricaID: 10
+        SouthAfricaID: 11
     }
 );
 
@@ -634,7 +638,7 @@ BlinkID.prototype.Country = Object.freeze(
         Sudan: 230,
         Suriname: 231,
         SvalbardAndJanMayen: 232,
-        Swaziland: 233,
+        Eswatini: 233,
         Syria: 234,
         Tajikistan: 235,
         Tanzania: 236,
@@ -778,7 +782,10 @@ BlinkID.prototype.Region = Object.freeze(
         BajaCaliforniaSur: 111,
         Campeche: 112,
         Colima: 113,
-        QuintanaRooBenitoJuarez: 114
+        QuintanaRooBenitoJuarez: 114,
+        QuintanaRoo: 115,
+        QuintanaRooSolidaridad: 116,
+        Tlaxcala: 117
     }
 );
 
@@ -834,7 +841,8 @@ BlinkID.prototype.Type = Object.freeze(
         RefugeeId: 45,
         TribalId: 46,
         VeteranId: 47,
-        CitizenshipCertificate: 48
+        CitizenshipCertificate: 48,
+        MyNumberCard: 49
     }
 );
 
@@ -2390,6 +2398,11 @@ function BlinkIdCombinedRecognizerResult(nativeResult) {
     this.additionalNameInformation = nativeResult.additionalNameInformation;
     
     /**
+     * The one more additional address information of the document owner.
+     */
+    this.additionalOptionalAddressInformation = nativeResult.additionalOptionalAddressInformation;
+    
+    /**
      * The address of the document owner.
      */
     this.address = nativeResult.address;
@@ -2400,6 +2413,11 @@ function BlinkIdCombinedRecognizerResult(nativeResult) {
      * @return current age of the document owner in years or -1 if date of birth is unknown.
      */
     this.age = nativeResult.age;
+    
+    /**
+     * The back raw camera frame.
+     */
+    this.backCameraFrame = nativeResult.backCameraFrame;
     
     /**
      * Defines possible color and moire statuses determined from scanned back image.
@@ -2417,6 +2435,11 @@ function BlinkIdCombinedRecognizerResult(nativeResult) {
     this.backVizResult = nativeResult.backVizResult;
     
     /**
+     * The barcode raw camera frame.
+     */
+    this.barcodeCameraFrame = nativeResult.barcodeCameraFrame;
+    
+    /**
      * Defines the data extracted from the barcode.
      */
     this.barcodeResult = nativeResult.barcodeResult;
@@ -2425,6 +2448,11 @@ function BlinkIdCombinedRecognizerResult(nativeResult) {
      * The classification information.
      */
     this.classInfo = nativeResult.classInfo;
+    
+    /**
+     * Detailed info on data match.
+     */
+    this.dataMatchDetailedInfo = nativeResult.dataMatchDetailedInfo;
     
     /**
      * The date of birth of the document owner.
@@ -2445,16 +2473,6 @@ function BlinkIdCombinedRecognizerResult(nativeResult) {
      * The date of issue of the document.
      */
     this.dateOfIssue = nativeResult.dateOfIssue != null ? new Date(nativeResult.dateOfIssue) : null;
-    
-    /**
-     * Digital signature of the recognition result. Available only if enabled with signResult property.
-     */
-    this.digitalSignature = nativeResult.digitalSignature;
-    
-    /**
-     * Version of the digital signature. Available only if enabled with signResult property.
-     */
-    this.digitalSignatureVersion = nativeResult.digitalSignatureVersion;
     
     /**
      * The additional number of the document.
@@ -2506,9 +2524,19 @@ function BlinkIdCombinedRecognizerResult(nativeResult) {
     this.faceImage = nativeResult.faceImage;
     
     /**
+     * The father's name of the document owner.
+     */
+    this.fathersName = nativeResult.fathersName;
+    
+    /**
      * The first name of the document owner.
      */
     this.firstName = nativeResult.firstName;
+    
+    /**
+     * The front raw camera frame.
+     */
+    this.frontCameraFrame = nativeResult.frontCameraFrame;
     
     /**
      * Defines possible color and moire statuses determined from scanned front image.
@@ -2559,6 +2587,11 @@ function BlinkIdCombinedRecognizerResult(nativeResult) {
      * The marital status of the document owner.
      */
     this.maritalStatus = nativeResult.maritalStatus;
+    
+    /**
+     * The mother's name of the document owner.
+     */
+    this.mothersName = nativeResult.mothersName;
     
     /**
      * The data extracted from the machine readable zone
@@ -2745,19 +2778,20 @@ function BlinkIdCombinedRecognizer() {
     this.returnSignatureImage = false;
     
     /**
+     * Configure the recognizer to save the raw camera frames.
+     * This significantly increases memory consumption.
+     * 
+     * 
+     */
+    this.saveCameraFrames = false;
+    
+    /**
      * Configure the recognizer to only work on already cropped and dewarped images.
      * This only works for still images - video feeds will ignore this setting.
      * 
      * 
      */
     this.scanCroppedDocumentImage = false;
-    
-    /**
-     * Whether or not recognition result should be signed.
-     * 
-     * 
-     */
-    this.signResult = false;
     
     /**
      * Property for setting DPI for signature images
@@ -2807,6 +2841,11 @@ function BlinkIdRecognizerResult(nativeResult) {
     this.additionalNameInformation = nativeResult.additionalNameInformation;
     
     /**
+     * The one more additional address information of the document owner.
+     */
+    this.additionalOptionalAddressInformation = nativeResult.additionalOptionalAddressInformation;
+    
+    /**
      * The address of the document owner.
      */
     this.address = nativeResult.address;
@@ -2819,9 +2858,19 @@ function BlinkIdRecognizerResult(nativeResult) {
     this.age = nativeResult.age;
     
     /**
+     * The barcode raw camera frame.
+     */
+    this.barcodeCameraFrame = nativeResult.barcodeCameraFrame;
+    
+    /**
      * Defines the data extracted from the barcode.
      */
     this.barcodeResult = nativeResult.barcodeResult;
+    
+    /**
+     * The raw camera frame.
+     */
+    this.cameraFrame = nativeResult.cameraFrame;
     
     /**
      * The classification information.
@@ -2890,6 +2939,11 @@ function BlinkIdRecognizerResult(nativeResult) {
     this.faceImage = nativeResult.faceImage;
     
     /**
+     * The father's name of the document owner.
+     */
+    this.fathersName = nativeResult.fathersName;
+    
+    /**
      * The first name of the document owner.
      */
     this.firstName = nativeResult.firstName;
@@ -2928,6 +2982,11 @@ function BlinkIdRecognizerResult(nativeResult) {
      * The marital status of the document owner.
      */
     this.maritalStatus = nativeResult.maritalStatus;
+    
+    /**
+     * The mother's name of the document owner.
+     */
+    this.mothersName = nativeResult.mothersName;
     
     /**
      * The data extracted from the machine readable zone
@@ -3096,6 +3155,14 @@ function BlinkIdRecognizer() {
      * 
      */
     this.returnSignatureImage = false;
+    
+    /**
+     * Configure the recognizer to save the raw camera frames.
+     * This significantly increases memory consumption.
+     * 
+     * 
+     */
+    this.saveCameraFrames = false;
     
     /**
      * Configure the recognizer to only work on already cropped and dewarped images.
@@ -3465,16 +3532,6 @@ function MrtdCombinedRecognizerResult(nativeResult) {
     RecognizerResult.call(this, nativeResult.resultState);
     
     /**
-     * Digital signature of the recognition result. Available only if enabled with signResult property.
-     */
-    this.digitalSignature = nativeResult.digitalSignature;
-    
-    /**
-     * Version of the digital signature. Available only if enabled with signResult property.
-     */
-    this.digitalSignatureVersion = nativeResult.digitalSignatureVersion;
-    
-    /**
      * Returns DataMatchResultSuccess if data from scanned parts/sides of the document match,
      * DataMatchResultFailed otherwise. For example if date of expiry is scanned from the front and back side
      * of the document and values do not match, this method will return DataMatchResultFailed. Result will
@@ -3599,13 +3656,6 @@ function MrtdCombinedRecognizer() {
      */
     this.returnFullDocumentImage = false;
     
-    /**
-     * Whether or not recognition result should be signed.
-     * 
-     * 
-     */
-    this.signResult = false;
-    
     this.createResultFromNative = function (nativeResult) { return new MrtdCombinedRecognizerResult(nativeResult); }
 
 }
@@ -3709,16 +3759,6 @@ function PassportRecognizerResult(nativeResult) {
     RecognizerResult.call(this, nativeResult.resultState);
     
     /**
-     * Digital signature of the recognition result. Available only if enabled with signResult property.
-     */
-    this.digitalSignature = nativeResult.digitalSignature;
-    
-    /**
-     * Version of the digital signature. Available only if enabled with signResult property.
-     */
-    this.digitalSignatureVersion = nativeResult.digitalSignatureVersion;
-    
-    /**
      * face image from the document if enabled with returnFaceImage property.
      */
     this.faceImage = nativeResult.faceImage;
@@ -3796,13 +3836,6 @@ function PassportRecognizer() {
      * 
      */
     this.returnFullDocumentImage = false;
-    
-    /**
-     * Whether or not recognition result should be signed.
-     * 
-     * 
-     */
-    this.signResult = false;
     
     this.createResultFromNative = function (nativeResult) { return new PassportRecognizerResult(nativeResult); }
 
@@ -4916,16 +4949,6 @@ function UsdlCombinedRecognizerResult(nativeResult) {
     RecognizerResult.call(this, nativeResult.resultState);
 
     /**
-     * Digital signature of the recognition result. Available only if enabled with signResult property.
-     */
-    this.digitalSignature = nativeResult.digitalSignature;
-
-    /**
-     * Version of the digital signature. Available only if enabled with signResult property.
-     */
-    this.digitalSignatureVersion = nativeResult.digitalSignatureVersion;
-
-    /**
      * Returns the result of the data matching algorithm for scanned parts/sides of the document.
      */
     this.documentDataMatch = nativeResult.documentDataMatch;
@@ -5059,12 +5082,6 @@ function UsdlCombinedRecognizer() {
      * Minimum number of stable detections required for detection to be successful.
      */
     this.numStableDetectionsThreshold = 6;
-
-    /**
-     * Whether or not recognition result should be signed.
-     *
-     */
-    this.signResult = false;
 
     this.createResultFromNative = function (nativeResult) { return new UsdlCombinedRecognizerResult(nativeResult); }
 

@@ -17,7 +17,7 @@
  * REVERSE ENGINEER, DECOMPILE, OR DISASSEMBLE IT.
  */
 
-#import "CDVMicroblinkScanner.h"
+#import "CDVBlinkIDScanner.h"
 
 #import "MBOverlayViewControllerDelegate.h"
 #import "MBRecognizerSerializers.h"
@@ -26,13 +26,6 @@
 #import "MBSerializationUtils.h"
 
 #import <Microblink/Microblink.h>
-
-const NSString *RESULT_LIST = @"resultList";
-
-const NSString *CANCELLED = @"cancelled";
-
-const int COMPRESSED_IMAGE_QUALITY = 90;
-
 
 @interface CDVPlugin () <MBOverlayViewControllerDelegate>
 
@@ -44,6 +37,11 @@ const int COMPRESSED_IMAGE_QUALITY = 90;
 
 @property (nonatomic, strong) MBRecognizerCollection *recognizerCollection;
 @property (nonatomic) id<MBRecognizerRunnerViewController> scanningViewController;
+
+@property (class, nonatomic, readonly) NSString *RESULT_LIST;
+@property (class, nonatomic, readonly) NSString *CANCELLED;
+@property (class, nonatomic, readonly) int COMPRESSED_IMAGE_QUALITY;
+
 @end
 
 @implementation CDVMicroblinkScanner
@@ -122,8 +120,8 @@ const int COMPRESSED_IMAGE_QUALITY = 90;
 
         NSDictionary *resultDict;
             resultDict = @{
-                CANCELLED: [NSNumber numberWithBool:NO],
-                RESULT_LIST: jsonResults
+                CDVMicroblinkScanner.CANCELLED: [NSNumber numberWithBool:NO],
+                CDVMicroblinkScanner.RESULT_LIST: jsonResults
             };
 
         CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:resultDict];
@@ -143,9 +141,22 @@ const int COMPRESSED_IMAGE_QUALITY = 90;
     self.recognizerCollection = nil;
     self.scanningViewController = nil;
     NSDictionary *resultDict = @{
-        CANCELLED : [NSNumber numberWithBool:YES]
+        CDVMicroblinkScanner.CANCELLED : [NSNumber numberWithBool:YES]
     };
     CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:resultDict];
     [self.commandDelegate sendPluginResult:result callbackId:self.lastCommand.callbackId];
 }
+
++ (NSString *)RESULT_LIST {
+    return @"resultList";
+}
+
++ (NSString *)CANCELLED {
+    return @"cancelled";
+}
+
++ (int)COMPRESSED_IMAGE_QUALITY {
+    return 90;
+}
+
 @end

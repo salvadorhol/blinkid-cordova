@@ -4,6 +4,8 @@ import com.microblink.plugins.cordova.SerializationUtils;
 
 import com.microblink.entities.recognizers.blinkid.mrtd.MrzResult;
 import com.microblink.entities.recognizers.blinkid.generic.DriverLicenseDetailedInfo;
+import com.microblink.entities.recognizers.blinkid.generic.DataMatchDetailedInfo;
+import com.microblink.entities.recognizers.blinkid.generic.VehicleClassInfo;
 import com.microblink.entities.recognizers.blinkid.generic.classinfo.ClassInfo;
 import com.microblink.entities.recognizers.blinkid.generic.imageanalysis.ImageAnalysisResult;
 import com.microblink.entities.recognizers.blinkid.generic.viz.VizResult;
@@ -52,7 +54,30 @@ public abstract class BlinkIDSerializationUtils {
         jsonDriverLicenseDetailedInfo.put("endorsements", dlDetailedInfo.getEndorsements());
         jsonDriverLicenseDetailedInfo.put("vehicleClass", dlDetailedInfo.getVehicleClass());
         jsonDriverLicenseDetailedInfo.put("conditions", dlDetailedInfo.getConditions());
+        JSONArray vehicleClassesInfo = new JSONArray();
+        for (int i = 0; i < dlDetailedInfo.getVehicleClassesInfo().length; ++i) {
+            vehicleClassesInfo.put(serializeVehicleClassInfo(dlDetailedInfo.getVehicleClassesInfo()[i]));
+        }
+        jsonDriverLicenseDetailedInfo.put("vehicleClassesInfo", vehicleClassesInfo);
         return jsonDriverLicenseDetailedInfo;
+    }
+
+    public static JSONObject serializeVehicleClassInfo(VehicleClassInfo vehicleClassInfo) throws JSONException {
+        JSONObject jsonVehicleClassInfo = new JSONObject();
+        jsonVehicleClassInfo.put("vehicleClass", vehicleClassInfo.getVehicleClass());
+        jsonVehicleClassInfo.put("licenceType", vehicleClassInfo.getLicenceType());
+        jsonVehicleClassInfo.put("effectiveDate", SerializationUtils.serializeDate(vehicleClassInfo.getEffectiveDate().getDate()));
+        jsonVehicleClassInfo.put("expiryDate", SerializationUtils.serializeDate(vehicleClassInfo.getExpiryDate().getDate()));
+        return jsonVehicleClassInfo;
+    }
+
+    public static JSONObject serializeDataMatchDetailedInfo(DataMatchDetailedInfo dataMatchDetailedInfo) throws JSONException {
+        JSONObject jsonDataMatch = new JSONObject();
+        jsonDataMatch.put("dateOfBirth", SerializationUtils.serializeEnum(dataMatchDetailedInfo.getDateOfBirth()));
+        jsonDataMatch.put("dateOfExpiry", SerializationUtils.serializeEnum(dataMatchDetailedInfo.getDateOfExpiry()));
+        jsonDataMatch.put("documentNumber", SerializationUtils.serializeEnum(dataMatchDetailedInfo.getDocumentNumber()));
+        jsonDataMatch.put("dataMatchResult", SerializationUtils.serializeEnum(dataMatchDetailedInfo.getDataMatchResult()));
+        return jsonDataMatch;
     }
 
     public static JSONObject serializeClassInfo(ClassInfo classInfo) throws JSONException {
@@ -88,6 +113,7 @@ public abstract class BlinkIDSerializationUtils {
         jsonViz.put("localizedName", vizResult.getLocalizedName());
         jsonViz.put("address", vizResult.getAddress());
         jsonViz.put("additionalAddressInformation", vizResult.getAdditionalAddressInformation());
+        jsonViz.put("additionalOptionalAddressInformation", vizResult.getAdditionalOptionalAddressInformation());
         jsonViz.put("placeOfBirth", vizResult.getPlaceOfBirth());
         jsonViz.put("nationality", vizResult.getNationality());
         jsonViz.put("race", vizResult.getRace());
