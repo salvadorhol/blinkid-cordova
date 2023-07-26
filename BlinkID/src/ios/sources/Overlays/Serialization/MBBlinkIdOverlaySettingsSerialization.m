@@ -161,6 +161,7 @@
     return [[MBBlinkIdOverlayViewController alloc] initWithSettings:sett recognizerCollection:recognizerCollection delegate:self];
 }
 
+
 - (void)blinkIdOverlayViewControllerDidFinishScanning:(nonnull MBBlinkIdOverlayViewController *)blinkIdOverlayViewController state:(MBRecognizerResultState)state {
     [self.delegate overlayViewControllerDidFinishScanning:blinkIdOverlayViewController state:state];
 }
@@ -168,6 +169,5 @@
 - (void)blinkIdOverlayViewControllerDidTapClose:(nonnull MBBlinkIdOverlayViewController *)blinkIdOverlayViewController {
     [self.delegate overlayDidTapClose:blinkIdOverlayViewController];
 }
-
 
 @end
