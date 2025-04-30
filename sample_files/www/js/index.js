@@ -55,30 +55,28 @@ var app = {
         documentBackImageDiv.style.visibility = "hidden";
         faceImageDiv.style.visibility = "hidden";
 
-        // to scan any machine readable travel document (passports, visa's and IDs with 
-        // machine readable zone), use MrtdRecognizer
-//        var mrtdRecognizer = new cordova.plugins.BlinkID.MrtdRecognizer();
-//        mrtdRecognizer.returnFullDocumentImage = true;
-        // wrap recognizer with SuccessFrameGrabberRecognizer to obtain camera frame from the successful scan
-//        var mrtdSuccessFrameGrabber = new cordova.plugins.BlinkID.SuccessFrameGrabberRecognizer(mrtdRecognizer);
-
         // BlinkIDMultiSideRecognizer automatically classifies different document types and scans the data from
         // the supported document
         var blinkIdMultiSideRecognizer = new cordova.plugins.BlinkID.BlinkIdMultiSideRecognizer();
         blinkIdMultiSideRecognizer.returnFullDocumentImage = true;
         blinkIdMultiSideRecognizer.returnFaceImage = true;
 
+        /* Uncomment line 67 if you're using scanWithDirectApi and you are sending cropped images for processing. 
+        The processing will most likely not work if cropped images are being sent with the scanCroppedDocumentImage property being set to false */
+
+        //blinkIdMultiSideRecognizer.scanCroppedDocumentImage = true;
+
         // there are lots of Recognizer objects in BlinkID - check blinkIdScanner.js for full reference
 
         var blinkidOverlaySettings = new cordova.plugins.BlinkID.BlinkIdOverlaySettings();
 
         // create RecognizerCollection from any number of recognizers that should perform recognition
-        var recognizerCollection = new cordova.plugins.BlinkID.RecognizerCollection([blinkIdMultiSideRecognizer /*, mrtdSuccessFrameGrabber */]);
+        var recognizerCollection = new cordova.plugins.BlinkID.RecognizerCollection([blinkIdMultiSideRecognizer]);
 
         // package name/bundleID com.microblink.sample
         var licenseKeys = {
-            android: 'sRwAAAAVY29tLm1pY3JvYmxpbmsuc2FtcGxlU9kJdZhZkGlTu9W3Oc1qzWWfUUuFAtgyxguvo8rtYSMtVGxqt3WAkPBbK9k8DerVvHFxGa5VRVFGGCavaV3CEqCVo+ntBtgbyweSpYwSnYTwQssdoraJg2wtZn3EmNFGI5/J+mXrbsXgW5Qpy+48bAVnLYKpRD5EoSWezPOBrcSalvFklg451RJlVcy0Ijii2dzLdwb4JJ2gLXEuzu8Q1/ayWaMRoUH7OmWKJDyMCMm+NOI+nxmzhKoPGVy4jrR2ZkdkYmzUj1YHfvTf5tYP0LEbwZTAs24ukTOYDuYbKGBYHmNmGUhEljRn86I2v3d3UgHdBPtok72J6LU=',
-            ios: 'sRwAAAEVY29tLm1pY3JvYmxpbmsuc2FtcGxl1BIcP4FpSuS/38LVO6iNNLvwTdq8BXiJ5UonUGzXseoV2n66Da5wNIZLr1ZBRlnFt2rbdnzzt/qU/fcwoCOqO8Zs2aUb2Psx4KutvE2SPyDiBo2Ko6yiA/P54/B8Jh8sEVWrLT341QghRicpTDbfiuJLtQ6HyCUrQOd28fxlwulwrZhqdyHmVJVQ6S4Gu2Dxd5dxt3LiIcZ0JeOjNKaPtc4Qnz7BYI2nQ5VfW2V2gYRIsvTzjgvT1AM2OibUXY0HeY4CTZ0BHwPVKTkQVnE39cOJST5k9JtZoZV086L2elpxizJueRIh4J8IzopUIFEFwq70cBj17Qr5gtc='
+            android: 'sRwCABVjb20ubWljcm9ibGluay5zYW1wbGUAbGV5SkRjbVZoZEdWa1QyNGlPakUzTXpVNE1qSTBPVFV5T0RNc0lrTnlaV0YwWldSR2IzSWlPaUprWkdRd05qWmxaaTAxT0RJekxUUXdNRGd0T1RRNE1DMDFORFU0WWpBeFlUVTJZamdpZlE9Pe17kwCrcsbfLHv9SpCjOsosRpjY0ZJY0bH3UmS849NVH08GkZkpIXRfS09XQ0mtt9yylB2aeB2L1lUpiKb8FCZrA+TErLE6F8IRdti+EZPMrV3GvpU+TLZBCcvfWWk4ffu7ANgrIr+WgRnxr155DOa+NmEY1oD60g==',
+            ios: 'sRwCABVjb20ubWljcm9ibGluay5zYW1wbGUBbGV5SkRjbVZoZEdWa1QyNGlPakUzTXpVNE1qSTBOakEzTmpZc0lrTnlaV0YwWldSR2IzSWlPaUprWkdRd05qWmxaaTAxT0RJekxUUXdNRGd0T1RRNE1DMDFORFU0WWpBeFlUVTJZamdpZlE9PZKCqvKghmuqhDWs9/GP/eAvvl/bC2awwEyPKpyENgXQIugQhFM3AiujVm5fOE/9OW0U96Ps5qRL47XvXGExKwjrw21+9/PugOMHlnG39bin1Uj/C2JuscJHHB7S/mPNUEqhd0YJWh2rOuVQnLGce1/N2sq25Wohig=='
         };
 
         function buildResult(result, key) {
@@ -99,6 +97,120 @@ var app = {
             return ""
         }
 
+        function handleRecognizerResult(blinkIdResult) {
+            var resultString =
+                buildResult(blinkIdResult.firstName.description, "First name") +
+                buildResult(blinkIdResult.lastName.description, "Last name") +
+                buildResult(blinkIdResult.fullName.description, "Full name") +
+                buildResult(blinkIdResult.localizedName.description, "Localized name") +
+                buildResult(blinkIdResult.additionalNameInformation.description, "Additional name info") +
+                buildResult(blinkIdResult.address.description, "Address") +
+                buildResult(blinkIdResult.additionalAddressInformation.description, "Additional address info") +
+                buildResult(blinkIdResult.additionalOptionalAddressInformation.description, "Additional optional address info") +
+                buildResult(blinkIdResult.documentNumber.description, "Document number") +
+                buildResult(blinkIdResult.documentAdditionalNumber.description, "Additional document number") +
+                buildResult(blinkIdResult.sex.description, "Sex") +
+                buildResult(blinkIdResult.issuingAuthority.description, "Issuing authority") +
+                buildResult(blinkIdResult.nationality.description, "Nationality") +
+                buildDateResult(blinkIdResult.dateOfBirth, "Date of birth") +
+                buildResult(blinkIdResult.age.description, "Age") +
+                buildDateResult(blinkIdResult.dateOfIssue, "Date of issue") +
+                buildDateResult(blinkIdResult.dateOfExpiry, "Date of expiry") +
+                buildResult(blinkIdResult.dateOfExpiryPermanent.description, "Date of expiry permanent") +
+                buildResult(blinkIdResult.expired.description, "Expired") +
+                buildResult(blinkIdResult.maritalStatus.description, "Martial status") +
+                buildResult(blinkIdResult.personalIdNumber.description, "Personal id number") +
+                buildResult(blinkIdResult.profession.description, "Profession") +
+                buildResult(blinkIdResult.race.description, "Race") +
+                buildResult(blinkIdResult.religion.description, "Religion") +
+                buildResult(blinkIdResult.residentialStatus.description, "Residential status") +
+                buildResult(blinkIdResult.processingStatus.description, "Processing status") +
+                buildResult(blinkIdResult.recognitionMode.description, "Recognition mode")
+                ;
+            if (blinkIdResult == blinkIdMultiSideRecognizer.result) {
+                let dataMatchResult = blinkIdResult.dataMatch;
+                resultString +=
+                buildResult(dataMatchResult.stateForWholeDocument, "State for the whole document") +
+                buildResult(dataMatchResult.states[0].state, "Date of birth") +
+                buildResult(dataMatchResult.states[1].state, "Date of expiry") +
+                buildResult(dataMatchResult.states[2].state, "Document number");
+            }
+            
+            var licenceInfo = blinkIdResult.driverLicenseDetailedInfo;
+            if (licenceInfo) {
+                var vehicleClassesInfoString = '';
+                if (licenceInfo.vehicleClassesInfo) {
+                  for (let i=0; i<licenceInfo.vehicleClassesInfo.length; i++) {
+                        vehicleClassesInfoString += buildResult(licenceInfo.vehicleClassesInfo[i].vehicleClass.description, 'Vehicle class') +  
+                        buildResult(licenceInfo.vehicleClassesInfo[i].licenceType.description, 'License type') +  
+                        buildDateResult(licenceInfo.vehicleClassesInfo[i].effectiveDate, 'Effective date') + 
+                        buildDateResult(licenceInfo.vehicleClassesInfo[i].expiryDate, 'Expiry date');
+                    }
+                }
+                resultString +=
+                    buildResult(licenceInfo.restrictions.description, "Restrictions") +
+                    buildResult(licenceInfo.endorsements.description, "Endorsements") +
+                    buildResult(licenceInfo.vehicleClass.description, "Vehicle class") +
+                    buildResult(licenceInfo.conditions.description, "Conditions") + 
+                    vehicleClassesInfoString;
+            }
+
+            // there are other fields to extract - check blinkIdScanner.js for full reference
+            resultDiv.innerHTML = resultString;
+            if (blinkIdResult == blinkIdMultiSideRecognizer.result) {
+                var resultDocumentFrontImage = blinkIdResult.fullDocumentFrontImage;
+                if (resultDocumentFrontImage) {
+                    documentFrontImage.src = "data:image/jpg;base64, " + resultDocumentFrontImage;
+                    documentFrontImageDiv.style.visibility = "visible";
+                }
+                var resultDocumentBackImage = blinkIdResult.fullDocumentBackImage;
+                if (resultDocumentBackImage) {
+                    documentBackImage.src = "data:image/jpg;base64, " + resultDocumentBackImage;
+                    documentBackImageDiv.style.visibility = "visible";
+                }
+            } else {
+                var resultDocumentImage = blinkIdResult.fullDocumentImage;
+                if (resultDocumentImage) {
+                    documentFrontImage.src = "data:image/jpg;base64, " + resultDocumentImage;
+                    documentFrontImageDiv.style.visibility = "visible";
+                }
+                documentBackImageDiv.style.visibility = "hidden";
+                documentBackImage.src = "";
+            }
+            var resultFaceImage = blinkIdResult.faceImage;
+            if (resultFaceImage) {
+                faceImage.src = "data:image/jpg;base64, " + resultFaceImage;
+                faceImageDiv.style.visibility = "visible";
+            }
+        }
+
+        //methods for opening the image picker and handling the data for the DirectAPI method of scanning
+        function openImagePicker(callback) {
+            return new Promise(function(resolve, reject) {
+                var options = {
+                    destinationType: Camera.DestinationType.DATA_URL,
+                    sourceType: Camera.PictureSourceType.PHOTOLIBRARY,
+                    mediaType: Camera.MediaType.PICTURE
+                    };
+                
+                navigator.camera.getPicture(function(imageData) {
+                    callback(imageData);
+                    resolve();
+                    }, function(errorMessage) {
+                        reject(errorMessage);
+                    }, options);
+            });
+        }
+        
+        function handleFrontImage(imageData) {
+            frontImage = imageData;
+        }
+        
+        function handleBackImage(imageData) {
+            backImage = imageData;
+        }
+
+        /* BlinkID scanning with camera */
         scanButton.addEventListener('click', function() {
             cordova.plugins.BlinkID.scanWithCamera(
 
@@ -121,82 +233,7 @@ var app = {
                     // if not cancelled, every recognizer will have its result property updated
 
                     if (blinkIdMultiSideRecognizer.result.resultState == cordova.plugins.BlinkID.RecognizerResultState.valid) {
-
-                        var blinkIdResult = blinkIdMultiSideRecognizer.result;
-                        var resultString =
-                            buildResult(blinkIdResult.firstName.description, "First name") +
-                            buildResult(blinkIdResult.lastName.description, "Last name") +
-                            buildResult(blinkIdResult.fullName.description, "Full name") +
-                            buildResult(blinkIdResult.localizedName.description, "Localized name") +
-                            buildResult(blinkIdResult.additionalNameInformation.description, "Additional name info") +
-                            buildResult(blinkIdResult.address.description, "Address") +
-                            buildResult(blinkIdResult.additionalAddressInformation.description, "Additional address info") +
-                            buildResult(blinkIdResult.additionalOptionalAddressInformation.description, "Additional optional address info") +
-                            buildResult(blinkIdResult.documentNumber.description, "Document number") +
-                            buildResult(blinkIdResult.documentAdditionalNumber.description, "Additional document number") +
-                            buildResult(blinkIdResult.sex.description, "Sex") +
-                            buildResult(blinkIdResult.issuingAuthority.description, "Issuing authority") +
-                            buildResult(blinkIdResult.nationality.description, "Nationality") +
-                            buildDateResult(blinkIdResult.dateOfBirth, "Date of birth") +
-                            buildResult(blinkIdResult.age.description, "Age") +
-                            buildDateResult(blinkIdResult.dateOfIssue, "Date of issue") +
-                            buildDateResult(blinkIdResult.dateOfExpiry, "Date of expiry") +
-                            buildResult(blinkIdResult.dateOfExpiryPermanent.description, "Date of expiry permanent") +
-                            buildResult(blinkIdResult.expired.description, "Expired") +
-                            buildResult(blinkIdResult.maritalStatus.description, "Martial status") +
-                            buildResult(blinkIdResult.personalIdNumber.description, "Personal id number") +
-                            buildResult(blinkIdResult.profession.description, "Profession") +
-                            buildResult(blinkIdResult.race.description, "Race") +
-                            buildResult(blinkIdResult.religion.description, "Religion") +
-                            buildResult(blinkIdResult.residentialStatus.description, "Residential status") +
-                            buildResult(blinkIdResult.processingStatus.description, "Processing status") +
-                            buildResult(blinkIdResult.recognitionMode.description, "Recognition mode")
-                            ;
-
-                        let dataMatchResult = blinkIdResult.dataMatchResult;
-                        resultString +=
-                        buildResult(dataMatchResult.stateForWholeDocument, "State for the whole document") +
-                        buildResult(dataMatchResult.states[0].state, "Date of birth") +
-                        buildResult(dataMatchResult.states[1].state, "Date of expiry") +
-                        buildResult(dataMatchResult.states[2].state, "Document number");
-
-                        var licenceInfo = blinkIdResult.driverLicenseDetailedInfo;
-                        if (licenceInfo) {
-                            var vehicleClassesInfoString = '';
-                            if (licenceInfo.vehicleClassesInfo) {
-                              for (let i=0; i<licenceInfo.vehicleClassesInfo.length; i++) {
-                                    vehicleClassesInfoString += buildResult(licenceInfo.vehicleClassesInfo[i].vehicleClass.description, 'Vehicle class') +  
-                                    buildResult(licenceInfo.vehicleClassesInfo[i].licenceType.description, 'License type') +  
-                                    buildDateResult(licenceInfo.vehicleClassesInfo[i].effectiveDate, 'Effective date') + 
-                                    buildDateResult(licenceInfo.vehicleClassesInfo[i].expiryDate, 'Expiry date');
-                                }
-                            }
-                            resultString +=
-                                buildResult(licenceInfo.restrictions.description, "Restrictions") +
-                                buildResult(licenceInfo.endorsements.description, "Endorsements") +
-                                buildResult(licenceInfo.vehicleClass.description, "Vehicle class") +
-                                buildResult(licenceInfo.conditions.description, "Conditions") + 
-                                vehicleClassesInfoString;
-                        }
-
-                        // there are other fields to extract - check blinkIdScanner.js for full reference
-                        resultDiv.innerHTML = resultString;
-
-                        var resultDocumentFrontImage = blinkIdMultiSideRecognizer.result.fullDocumentFrontImage;
-                        if (resultDocumentFrontImage) {
-                            documentFrontImage.src = "data:image/jpg;base64, " + resultDocumentFrontImage;
-                            documentFrontImageDiv.style.visibility = "visible";
-                        }
-                        var resultDocumentBackImage = blinkIdMultiSideRecognizer.result.fullDocumentBackImage;
-                        if (resultDocumentBackImage) {
-                            documentBackImage.src = "data:image/jpg;base64, " + resultDocumentBackImage;
-                            documentBackImageDiv.style.visibility = "visible";
-                        }
-                        var resultFaceImage = blinkIdMultiSideRecognizer.result.faceImage;
-                        if (resultFaceImage) {
-                            faceImage.src = "data:image/jpg;base64, " + resultFaceImage;
-                            faceImageDiv.style.visibility = "visible";
-                        }
+                        handleRecognizerResult(blinkIdMultiSideRecognizer.result);
                     } else {
                         resultDiv.innerHTML = "Result is empty!";
                     }
@@ -211,10 +248,110 @@ var app = {
             );
         });
 
+        /* BlinkID scanning with DirectAPI and the BlinkIDMultiSide recognizer.
+        Best used for getting the information from both front and backside information from various documents */
+        directAPIMultiSideButton.addEventListener('click', function() {
+            //Open the image picker for getting the front image
+            openImagePicker(handleFrontImage)
+                .then(function() {
+                //Open the image picker again for getting the back image
+                return openImagePicker(handleBackImage);
+                })
+                .then(function() {
+                    //Send the images to the scanWithDirectApi method for processing
+                    cordova.plugins.BlinkID.scanWithDirectApi(
+                        // Register the callback handler
+                        function callback(cancelled) {
+        
+                            resultDiv.innerHTML = "";
+                
+                            successfulImageDiv.style.visibility = "hidden";
+                            documentFrontImageDiv.style.visibility = "hidden";
+                            documentBackImageDiv.style.visibility = "hidden";
+                            faceImageDiv.style.visibility = "hidden";
+                
+                            // handle cancelled scanning
+                            if (cancelled) {
+                                resultDiv.innerHTML = "Cancelled!";
+                                return;
+                            }
+
+                            // if not cancelled, every recognizer will have its result property updated
+                            if (blinkIdMultiSideRecognizer.result.resultState != cordova.plugins.BlinkID.RecognizerResultState.empty) {
+                                handleRecognizerResult(blinkIdMultiSideRecognizer.result);
+                            } else {
+                                resultDiv.innerHTML = "Result is empty!";
+                            }
+                        },
+                        // Register the error callback
+                        function errorHandler(err) {
+                            alert('Error: ' + err);
+                        },
+                        recognizerCollection, frontImage, backImage, licenseKeys
+                    );
+                })
+                //Catch any errors that might occur during the DirectAPI processing
+                .catch(function(error) {
+                    alert('DirectAPI Multiside error: ' + error);
+                });
+            });
+
+        /* BlinkID scanning with DirectAPI and the BlinkIDSingleSide recognizer.
+        Best used for getting the information from only one side of the various documents */
+        directAPISingleSideButton.addEventListener('click', function() {
+            //Open the image picker for getting the document image
+            openImagePicker(handleFrontImage)
+                .then(function() {
+                    var blinkIdSingleSideRecognizer = new cordova.plugins.BlinkID.BlinkIdSingleSideRecognizer();
+                    blinkIdSingleSideRecognizer.returnFullDocumentImage = true;
+                    blinkIdSingleSideRecognizer.returnFaceImage = true;
+
+                    /* Uncomment line 312 if you're using scanWithDirectApi and you are sending cropped images for processing. 
+                    The processing will most likely not work if cropped images are being sent with the scanCroppedDocumentImage property being set to false */
+
+                    //blinkIdSingleSideRecognizer.scanCroppedDocumentImage = true;
+                
+                    var recognizerCollection = new cordova.plugins.BlinkID.RecognizerCollection([blinkIdSingleSideRecognizer]);
+
+                    //Send the image to the scanWithDirectApi method to process the information
+                    cordova.plugins.BlinkID.scanWithDirectApi(
+                        // Register the callback handler
+                        function callback(cancelled) {
+        
+                            resultDiv.innerHTML = "";
+                
+                            successfulImageDiv.style.visibility = "hidden";
+                            documentFrontImageDiv.style.visibility = "hidden";
+                            documentBackImageDiv.style.visibility = "hidden";
+                            faceImageDiv.style.visibility = "hidden";
+                
+                            // handle cancelled scanning
+                            if (cancelled) {
+                                resultDiv.innerHTML = "Cancelled!";
+                            return;
+                            }            
+                            // if not cancelled, every recognizer will have its result property updated
+                            if (blinkIdSingleSideRecognizer.result.resultState != cordova.plugins.BlinkID.RecognizerResultState.empty) {
+                                handleRecognizerResult(blinkIdSingleSideRecognizer.result);
+                            } else {
+                                resultDiv.innerHTML = "Result is empty!";
+                            }
+                        },
+                        // Register the error callback
+                        function errorHandler(err) {
+                            alert('Error: ' + err);
+                        },
+                        recognizerCollection, frontImage, null, licenseKeys
+                    );            
+                })
+                //Catch any errors that might occur during the DirectAPI processing
+                .catch(function(error) {
+                    alert('DirectAPI Singleside error:', error);
+                });
+        });
     },
     // Update DOM on a Received Event
     receivedEvent: function(id) {
         console.log('Received Event: ' + id);
     }
-
 };

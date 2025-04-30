@@ -22,9 +22,15 @@
 +(NSDictionary * _Nonnull) serializeBarcodeResult:(MBBarcodeResult * _Nonnull)barcodeResult;
 +(NSDictionary * _Nonnull) serializeImageAnalysisResult:(MBImageAnalysisResult * _Nonnull)imageAnalysisResult;
 +(MBRecognitionModeFilter * _Nonnull) deserializeMBRecognitionModeFilter:(NSDictionary * _Nullable)jsonRecognitionModeFilter;
++(MBClassAnonymizationSettings * _Nonnull) deserializeMBClassAnonymizationSettings:(NSDictionary * _Nullable)jsonClassAnonymizationSettings;
 +(NSDictionary * _Nonnull) serializeBarcodeElements:(MBBarcodeElements * _Nonnull)extendedElements;
 +(NSArray<NSString *> * _Nonnull) serializeBarcodeElementsValues:(MBBarcodeElements * _Nonnull)extendedElements;
 + (NSDictionary * _Nonnull)serializeAdditionalProcessingInfo:(MBAdditionalProcessingInfo * _Nullable)additionalProcessingInfo;
-+ (NSDictionary * _Nonnull)serializeMBDate:(MBDate * _Nonnull)date;
-
++ (NSDictionary * _Nonnull)serializeMBDateResult:(MBDateResult * _Nullable) value;
++(NSDictionary * _Nonnull) serializeMBStringResult:(MBStringResult * _Nullable) value;
++(NSNumber * _Nullable)serializeMBSide:(MBSide) value;
++(NSDictionary * _Nonnull) serializeNSDate:(NSDate * _Nullable) value;
++(MBCustomClassRules * _Nonnull) deserializeMBCustomClassRules:(NSDictionary * _Nullable)jsonCustomClassRules;
++(NSMutableArray<NSDictionary *> * _Nullable) serializeDependentInfo:(NSArray<MBDependentInfo *>* _Nullable)dependentInfos;
++ (BOOL)deserializeClassFilter:(NSDictionary * _Nullable)jsonRecognizerCollection classInfo:(MBClassInfo * _Nullable)classInfo;
 @end

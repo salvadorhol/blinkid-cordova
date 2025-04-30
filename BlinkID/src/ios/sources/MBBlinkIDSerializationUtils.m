@@ -16,12 +16,12 @@
         @"primaryId" : mrzResult.primaryID,
         @"secondaryId" : mrzResult.secondaryID,
         @"issuer" : mrzResult.issuer,
-        @"dateOfBirth" : [MBBlinkIDSerializationUtils serializeMBDate:mrzResult.dateOfBirth],
+        @"dateOfBirth" : [MBSerializationUtils serializeMBDate:mrzResult.dateOfBirth],
         @"documentNumber" : mrzResult.documentNumber,
         @"nationality" : mrzResult.nationality,
         @"gender" : mrzResult.gender,
         @"documentCode" : mrzResult.documentCode,
-        @"dateOfExpiry" : [MBBlinkIDSerializationUtils serializeMBDate:mrzResult.dateOfExpiry],
+        @"dateOfExpiry" : [MBSerializationUtils serializeMBDate:mrzResult.dateOfExpiry],
         @"opt1" : mrzResult.opt1,
         @"opt2" : mrzResult.opt2,
         @"alienNumber" : mrzResult.alienNumber,
@@ -61,10 +61,10 @@
     }
     
     return @{
-        @"restrictions" : [MBSerializationUtils serializeMBStringResult:driverLicenseDetailedInfo.restrictions],
-        @"endorsements" : [MBSerializationUtils serializeMBStringResult:driverLicenseDetailedInfo.endorsements],
-        @"vehicleClass" : [MBSerializationUtils serializeMBStringResult:driverLicenseDetailedInfo.vehicleClass],
-        @"conditions" : [MBSerializationUtils serializeMBStringResult:driverLicenseDetailedInfo.conditions],
+        @"restrictions" : [MBBlinkIDSerializationUtils serializeMBStringResult:driverLicenseDetailedInfo.restrictions],
+        @"endorsements" : [MBBlinkIDSerializationUtils serializeMBStringResult:driverLicenseDetailedInfo.endorsements],
+        @"vehicleClass" : [MBBlinkIDSerializationUtils serializeMBStringResult:driverLicenseDetailedInfo.vehicleClass],
+        @"conditions" : [MBBlinkIDSerializationUtils serializeMBStringResult:driverLicenseDetailedInfo.conditions],
         @"vehicleClassesInfo" : vehicleClassesInfo
     };
 }
@@ -87,10 +87,10 @@
 
 +(NSDictionary *) serializeVehicleClassInfo:(MBVehicleClassInfo *)vehicleClassInfo {
     return @{
-        @"vehicleClass" : [MBSerializationUtils serializeMBStringResult:vehicleClassInfo.vehicleClass],
-        @"licenceType" : [MBSerializationUtils serializeMBStringResult:vehicleClassInfo.licenceType],
-        @"effectiveDate" : [MBSerializationUtils serializeMBDateResult:vehicleClassInfo.effectiveDate],
-        @"expiryDate" : [MBSerializationUtils serializeMBDateResult:vehicleClassInfo.expiryDate]
+        @"vehicleClass" : [MBBlinkIDSerializationUtils serializeMBStringResult:vehicleClassInfo.vehicleClass],
+        @"licenceType" : [MBBlinkIDSerializationUtils serializeMBStringResult:vehicleClassInfo.licenceType],
+        @"effectiveDate" : [MBBlinkIDSerializationUtils serializeMBDateResult:vehicleClassInfo.effectiveDate],
+        @"expiryDate" : [MBBlinkIDSerializationUtils serializeMBDateResult:vehicleClassInfo.expiryDate]
     };
 }
 
@@ -98,8 +98,8 @@
     return @{
         @"vehicleClass" : vehicleClassInfo.vehicleClass,
         @"licenceType" : vehicleClassInfo.licenceType,
-        @"effectiveDate" : [MBBlinkIDSerializationUtils serializeMBDate:vehicleClassInfo.effectiveDate],
-        @"expiryDate" : [MBBlinkIDSerializationUtils serializeMBDate:vehicleClassInfo.expiryDate]
+        @"effectiveDate" : [MBSerializationUtils serializeMBDate :vehicleClassInfo.effectiveDate],
+        @"expiryDate" : [MBSerializationUtils serializeMBDate:vehicleClassInfo.expiryDate]
     };
 }
 
@@ -136,33 +136,86 @@
              };
 }
 
++ (BOOL)deserializeClassFilter:(NSDictionary *)jsonRecognizerCollection classInfo:(MBClassInfo *)classInfo {
+    BOOL includeClass = NO;
+    BOOL excludeClass = YES;
+    NSDictionary *classFilter;
+    
+    for (NSDictionary *recognizer in jsonRecognizerCollection[@"recognizerArray"]) {
+        NSString *recognizerType = recognizer[@"recognizerType"];
+        
+        if ([recognizerType isEqualToString:@"BlinkIdMultiSideRecognizer"] ||
+            [recognizerType isEqualToString:@"BlinkIdSingleSideRecognizer"]) {
+            
+            classFilter = recognizer[@"classFilter"];
+            if (!classFilter) {
+                return YES;
+            }
+        }
+    }
+    
+    NSArray *addClassToClassFilter = classFilter[@"includeClasses"];
+    if (addClassToClassFilter != nil && ![addClassToClassFilter isEqual:[NSNull null]]) {
+        if ([addClassToClassFilter count] > 0) {
+            for (int i = 0; i < [addClassToClassFilter count]; i++) {
+                NSDictionary *jsonClassInfo = addClassToClassFilter[i];
+                includeClass = includeClass || [self matchClassFilter:jsonClassInfo classInfo:classInfo];
+            }
+        } else {
+            includeClass = YES;
+        }
+    } else {
+        includeClass = YES;
+    }
+    
+    NSArray *removeClassFromClassFilter = classFilter[@"excludeClasses"];
+    if (removeClassFromClassFilter != nil && ![removeClassFromClassFilter isEqual:[NSNull null]]) {
+        for (int i = 0; i < [removeClassFromClassFilter count]; i++) {
+            NSDictionary *jsonClassInfo = removeClassFromClassFilter[i];
+            excludeClass = excludeClass && ![self matchClassFilter:jsonClassInfo classInfo:classInfo];
+        }
+    }
+    return  includeClass && excludeClass;
+}
+
++ (BOOL)matchClassFilter:(NSDictionary *)jsonClassFilterInfo classInfo:(MBClassInfo *)classInfo {
+    
+    NSNumber *country = [jsonClassFilterInfo valueForKey:@"country"];
+    NSNumber *region = [jsonClassFilterInfo valueForKey:@"region"];
+    NSNumber *type = [jsonClassFilterInfo valueForKey:@"type"];
+
+    return (![self isNotNullandNil:country] || classInfo.country == country.integerValue) &&
+           (![self isNotNullandNil:type] || classInfo.type == type.integerValue) &&
+           (![self isNotNullandNil:region]|| classInfo.region == region.integerValue);
+}
+
 +(NSDictionary *) serializeVizResult:(MBVizResult *)vizResult {
     return @{
-        @"firstName" : [MBSerializationUtils serializeMBStringResult:vizResult.firstName],
-        @"lastName" : [MBSerializationUtils serializeMBStringResult:vizResult.lastName],
-        @"fullName" : [MBSerializationUtils serializeMBStringResult:vizResult.fullName],
-        @"additionalNameInformation" : [MBSerializationUtils serializeMBStringResult:vizResult.additionalNameInformation],
-        @"localizedName" : [MBSerializationUtils serializeMBStringResult:vizResult.localizedName],
-        @"address" : [MBSerializationUtils serializeMBStringResult:vizResult.address],
-        @"additionalAddressInformation" : [MBSerializationUtils serializeMBStringResult:vizResult.additionalAddressInformation],
-        @"additionalOptionalAddressInformation" : [MBSerializationUtils serializeMBStringResult:vizResult.additionalOptionalAddressInformation],
-        @"placeOfBirth" : [MBSerializationUtils serializeMBStringResult:vizResult.placeOfBirth],
-        @"nationality" : [MBSerializationUtils serializeMBStringResult:vizResult.nationality],
-        @"race" : [MBSerializationUtils serializeMBStringResult:vizResult.race],
-        @"religion" : [MBSerializationUtils serializeMBStringResult:vizResult.religion],
-        @"profession" : [MBSerializationUtils serializeMBStringResult:vizResult.profession],
-        @"maritalStatus" : [MBSerializationUtils serializeMBStringResult:vizResult.maritalStatus],
-        @"residentialStatus" : [MBSerializationUtils serializeMBStringResult:vizResult.residentialStatus],
-        @"employer" : [MBSerializationUtils serializeMBStringResult:vizResult.employer],
-        @"sex" : [MBSerializationUtils serializeMBStringResult:vizResult.sex],
-        @"dateOfBirth" : [MBSerializationUtils serializeMBDateResult:vizResult.dateOfBirth],
-        @"dateOfIssue" : [MBSerializationUtils serializeMBDateResult:vizResult.dateOfIssue],
-        @"dateOfExpiry" : [MBSerializationUtils serializeMBDateResult:vizResult.dateOfExpiry],
-        @"documentNumber" : [MBSerializationUtils serializeMBStringResult:vizResult.documentNumber],
-        @"personalIdNumber" : [MBSerializationUtils serializeMBStringResult:vizResult.personalIdNumber],
-        @"documentAdditionalNumber" : [MBSerializationUtils serializeMBStringResult:vizResult.documentAdditionalNumber],
-        @"additionalPersonalIdNumber" : [MBSerializationUtils serializeMBStringResult:vizResult.additionalPersonalIdNumber],
-        @"issuingAuthority" : [MBSerializationUtils serializeMBStringResult:vizResult.issuingAuthority],
+        @"firstName" : [MBBlinkIDSerializationUtils serializeMBStringResult:vizResult.firstName],
+        @"lastName" : [MBBlinkIDSerializationUtils serializeMBStringResult:vizResult.lastName],
+        @"fullName" : [MBBlinkIDSerializationUtils serializeMBStringResult:vizResult.fullName],
+        @"additionalNameInformation" : [MBBlinkIDSerializationUtils serializeMBStringResult:vizResult.additionalNameInformation],
+        @"localizedName" : [MBBlinkIDSerializationUtils serializeMBStringResult:vizResult.localizedName],
+        @"address" : [MBBlinkIDSerializationUtils serializeMBStringResult:vizResult.address],
+        @"additionalAddressInformation" : [MBBlinkIDSerializationUtils serializeMBStringResult:vizResult.additionalAddressInformation],
+        @"additionalOptionalAddressInformation" : [MBBlinkIDSerializationUtils serializeMBStringResult:vizResult.additionalOptionalAddressInformation],
+        @"placeOfBirth" : [MBBlinkIDSerializationUtils serializeMBStringResult:vizResult.placeOfBirth],
+        @"nationality" : [MBBlinkIDSerializationUtils serializeMBStringResult:vizResult.nationality],
+        @"race" : [MBBlinkIDSerializationUtils serializeMBStringResult:vizResult.race],
+        @"religion" : [MBBlinkIDSerializationUtils serializeMBStringResult:vizResult.religion],
+        @"profession" : [MBBlinkIDSerializationUtils serializeMBStringResult:vizResult.profession],
+        @"maritalStatus" : [MBBlinkIDSerializationUtils serializeMBStringResult:vizResult.maritalStatus],
+        @"residentialStatus" : [MBBlinkIDSerializationUtils serializeMBStringResult:vizResult.residentialStatus],
+        @"employer" : [MBBlinkIDSerializationUtils serializeMBStringResult:vizResult.employer],
+        @"sex" : [MBBlinkIDSerializationUtils serializeMBStringResult:vizResult.sex],
+        @"dateOfBirth" : [MBBlinkIDSerializationUtils serializeMBDateResult:vizResult.dateOfBirth],
+        @"dateOfIssue" : [MBBlinkIDSerializationUtils serializeMBDateResult:vizResult.dateOfIssue],
+        @"dateOfExpiry" : [MBBlinkIDSerializationUtils serializeMBDateResult:vizResult.dateOfExpiry],
+        @"documentNumber" : [MBBlinkIDSerializationUtils serializeMBStringResult:vizResult.documentNumber],
+        @"personalIdNumber" : [MBBlinkIDSerializationUtils serializeMBStringResult:vizResult.personalIdNumber],
+        @"documentAdditionalNumber" : [MBBlinkIDSerializationUtils serializeMBStringResult:vizResult.documentAdditionalNumber],
+        @"additionalPersonalIdNumber" : [MBBlinkIDSerializationUtils serializeMBStringResult:vizResult.additionalPersonalIdNumber],
+        @"issuingAuthority" : [MBBlinkIDSerializationUtils serializeMBStringResult:vizResult.issuingAuthority],
         @"driverLicenseDetailedInfo" : [MBBlinkIDSerializationUtils serializeDriverLicenseDetailedInfo:vizResult.driverLicenseDetailedInfo],
         @"empty" : [NSNumber numberWithBool:vizResult.empty]
     };
@@ -189,9 +242,9 @@
         @"residentialStatus" : barcodeResult.residentialStatus,
         @"employer" : barcodeResult.employer,
         @"sex" : barcodeResult.sex,
-        @"dateOfBirth" : [MBBlinkIDSerializationUtils serializeMBDate:barcodeResult.dateOfBirth],
-        @"dateOfIssue" : [MBBlinkIDSerializationUtils serializeMBDate:barcodeResult.dateOfIssue],
-        @"dateOfExpiry" : [MBBlinkIDSerializationUtils serializeMBDate:barcodeResult.dateOfExpiry],
+        @"dateOfBirth" : [MBSerializationUtils serializeMBDate:barcodeResult.dateOfBirth],
+        @"dateOfIssue" : [MBSerializationUtils serializeMBDate:barcodeResult.dateOfIssue],
+        @"dateOfExpiry" : [MBSerializationUtils serializeMBDate:barcodeResult.dateOfExpiry],
         @"documentNumber" : barcodeResult.documentNumber,
         @"personalIdNumber" : barcodeResult.personalIdNumber,
         @"documentAdditionalNumber" : barcodeResult.documentAdditionalNumber,
@@ -208,12 +261,17 @@
 
 +(NSDictionary *) serializeImageAnalysisResult:(MBImageAnalysisResult *)imageAnalysisResult {
     return @{
-             @"blurred" : [NSNumber numberWithBool:imageAnalysisResult.blurred],
              @"documentImageColorStatus" : [NSNumber numberWithInteger:(imageAnalysisResult.documentImageColorStatus)],
              @"documentImageMoireStatus" : [NSNumber numberWithInteger:(imageAnalysisResult.documentImageMoireStatus)],
              @"faceDetectionStatus" : [NSNumber numberWithInteger:(imageAnalysisResult.faceDetectionStatus)],
              @"mrzDetectionStatus" : [NSNumber numberWithInteger:(imageAnalysisResult.mrzDetectionStatus)],
-             @"barcodeDetectionStatus" : [NSNumber numberWithInteger:(imageAnalysisResult.barcodeDetectionStatus)]
+             @"barcodeDetectionStatus" : [NSNumber numberWithInteger:(imageAnalysisResult.barcodeDetectionStatus)],
+             @"cardRotation" : [NSNumber numberWithInteger:(imageAnalysisResult.cardRotation)],
+             @"cardOrientation" : [NSNumber numberWithInteger:(imageAnalysisResult.cardOrientation)],
+             @"realIdDetectionStatus" : [NSNumber numberWithInteger:(imageAnalysisResult.realIDDetectionStatus)],
+             @"blurDetected" : [NSNumber numberWithBool:imageAnalysisResult.blurDetected],
+             @"glareDetected" : [NSNumber numberWithBool:imageAnalysisResult.glareDetected],
+
         };
 }
 
@@ -231,6 +289,81 @@
 
         return recognitionModeFilter;
     }
+}
+
++(MBClassAnonymizationSettings *) deserializeMBClassAnonymizationSettings:(NSDictionary *)jsonClassAnonymizationSettings {
+  if (jsonClassAnonymizationSettings == nil) {
+      return [[MBClassAnonymizationSettings alloc] init];
+  }
+    
+    NSArray<NSNumber *> *fields = [jsonClassAnonymizationSettings objectForKey:@"fields"];
+    NSMutableArray<NSNumber *> *newFields = [[NSMutableArray alloc] init];
+    for (NSNumber *field in fields) {
+      [newFields addObject:field];
+    }
+
+    NSDictionary *jsonDocumentNumberAnonymizationSettings = [jsonClassAnonymizationSettings valueForKey:@"documentNumberAnonymizationSettings"];
+    
+    if (jsonDocumentNumberAnonymizationSettings != nil && ![jsonDocumentNumberAnonymizationSettings isEqual:[NSNull null]]) {
+        MBDocumentNumberAnonymizationSettings *documentNumberAnonymizationSettings = [[MBDocumentNumberAnonymizationSettings alloc] initWithPrefixDigitsVisible:[[jsonDocumentNumberAnonymizationSettings valueForKey:@"prefixDigitsVisible"] integerValue] suffixDigitsVisible:[[jsonDocumentNumberAnonymizationSettings valueForKey:@"suffixDigitsVisible"] integerValue]];
+        
+      if ([jsonClassAnonymizationSettings valueForKey:@"country"] != nil||
+        [jsonClassAnonymizationSettings valueForKey:@"region"] != nil ||
+        [jsonClassAnonymizationSettings valueForKey:@"type"] != nil) {
+          
+          MBClassFilter *classInfoFilter = [self deserializeClassInfoFilter:jsonClassAnonymizationSettings];
+          return [[MBClassAnonymizationSettings alloc] initWithClassFilter:classInfoFilter documentNumberAnonymizationSettings:documentNumberAnonymizationSettings fields:newFields];
+      } else {
+          return [[MBClassAnonymizationSettings alloc] initWithFields:newFields documentNumberAnonymizationSettings:documentNumberAnonymizationSettings];
+      }
+    } else {
+        return [[MBClassAnonymizationSettings alloc] initWithFields:newFields documentNumberAnonymizationSettings:nil];
+    }
+}
+
++(MBCustomClassRules *) deserializeMBCustomClassRules:(NSDictionary *)jsonCustomClassRules {
+    if (jsonCustomClassRules == nil) {
+        return [[MBCustomClassRules alloc] initWithClassFilter:nil fields:nil];
+    } else {
+        NSArray<NSNumber *> *detailedFieldTypes = [jsonCustomClassRules objectForKey:@"detailedFieldTypes"];
+        NSMutableArray<MBDetailedFieldType *> *newDetailedFieldTypes = [[NSMutableArray alloc] init];
+
+        for (NSNumber *detailedfield in detailedFieldTypes) {
+            NSNumber *fieldType = [detailedfield valueForKey:@"fieldType"];
+            NSNumber *alphabetType = [detailedfield valueForKey:@"alphabetType"];
+            
+            MBDetailedFieldType *detailedFieldType = [[MBDetailedFieldType alloc] initWithFieldType:[fieldType integerValue] alphabetType: [alphabetType integerValue]];
+            [newDetailedFieldTypes addObject:detailedFieldType];
+        }
+        
+        MBClassFilter *classFilter = [self deserializeClassInfoFilter:jsonCustomClassRules];
+        
+        return [[MBCustomClassRules alloc] initWithClassFilter:classFilter fields:newDetailedFieldTypes];
+    }
+}
+
++(MBClassFilter *)deserializeClassInfoFilter:(NSDictionary *)jsonClassInfoFilter {
+    if (jsonClassInfoFilter == nil) {
+        return [[MBClassFilter alloc] init];
+    }
+    
+    NSNumber *country = [jsonClassInfoFilter valueForKey:@"country"];
+    NSNumber *region = [jsonClassInfoFilter valueForKey:@"region"];
+    NSNumber *type = [jsonClassInfoFilter valueForKey:@"type"];
+    
+    MBClassFilterBuilder *classFilterBuilder = [[MBClassFilterBuilder alloc] init];
+    
+    if (![country isEqual:[NSNull null]] && country.integerValue != nil ) {
+        [classFilterBuilder withCountry:country.integerValue];
+    }
+    if (![region isEqual:[NSNull null]] && region.integerValue != nil ) {
+        [classFilterBuilder withRegion:region.integerValue];
+    }
+    if (![type isEqual:[NSNull null]] && type.integerValue != nil ) {
+        [classFilterBuilder withType:type.integerValue];
+    }
+    
+    return [classFilterBuilder build];
 }
 
 +(NSDictionary * _Nonnull) serializeBarcodeElements:(MBBarcodeElements * _Nonnull)extendedElements {
@@ -252,17 +385,83 @@
     return @{
         @"missingMandatoryFields": additionalProcessingInfo.missingMandatoryFields,
         @"invalidCharacterFields" : additionalProcessingInfo.invalidCharacterFields,
-        @"extraPresentFields": additionalProcessingInfo.extraPresentFields
+        @"extraPresentFields": additionalProcessingInfo.extraPresentFields,
+        @"imageExtractionFailures": additionalProcessingInfo.imageExtractionFailures
     };
 }
 
-+ (NSDictionary *)serializeMBDate:(MBDate *)date {
++ (NSDictionary *)serializeMBDateResult:(MBDateResult *) value {
+    NSMutableDictionary *dict = [MBBlinkIDSerializationUtils serializeDay:value.day month:value.month year:value.year].mutableCopy;
+    [dict setValue:[MBBlinkIDSerializationUtils serializeMBStringResult:value.originalDateStringResult] forKey:@"originalDateStringResult"];
+    [dict setValue:[NSNumber numberWithBool:value.isFilledByDomainKnowledge] forKey:@"isFilledByDomainKnowledge"];
+    return dict;
+}
+
++(NSDictionary *) serializeDay:(NSInteger)day month:(NSInteger)month year:(NSInteger)year {
     return @{
-        @"day" : @(date.day),
-        @"month" : @(date.month),
-        @"year" : @(date.year),
-        @"originalDateString" : date.originalDateString
+      @"day" : [NSNumber numberWithInteger:day],
+      @"month" : [NSNumber numberWithInteger:month],
+      @"year" : [NSNumber numberWithInteger:year]
     };
+}
+
++(NSDictionary *) serializeNSDate:(NSDate*) value {
+    NSDateComponents *components = [[NSCalendar currentCalendar] components:NSCalendarUnitDay | NSCalendarUnitMonth | NSCalendarUnitYear fromDate:value];
+    return [MBBlinkIDSerializationUtils serializeDay:components.day month:components.month year:components.year];
+}
+
++ (NSDictionary *)serializeMBStringResult:(MBStringResult *) value {
+    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+    [dict setValue:[value valueForAlphabetType:MBAlphabetTypeLatin] forKey:@"latin"];
+    [dict setValue:[value valueForAlphabetType:MBAlphabetTypeArabic] forKey:@"arabic"];
+    [dict setValue:[value valueForAlphabetType:MBAlphabetTypeCyrillic] forKey:@"cyrillic"];
+    [dict setValue:[value valueForAlphabetType:MBAlphabetTypeGreek] forKey:@"greek"];
+    [dict setValue:value.description forKey:@"description"];
+    
+    NSMutableDictionary *location = [NSMutableDictionary dictionary];
+    [location setValue:[MBSerializationUtils serializeCGRect:[value locationForAlphabetType:MBAlphabetTypeLatin]] forKey:@"latin"];
+    [location setValue:[MBSerializationUtils serializeCGRect:[value locationForAlphabetType:MBAlphabetTypeArabic]] forKey:@"arabic"];
+    [location setValue:[MBSerializationUtils serializeCGRect:[value locationForAlphabetType:MBAlphabetTypeCyrillic]] forKey:@"cyrillic"];
+    [location setValue:[MBSerializationUtils serializeCGRect:[value locationForAlphabetType:MBAlphabetTypeGreek]] forKey:@"greek"];
+    [dict setValue:location forKey:@"location"];
+    
+    NSMutableDictionary *side = [NSMutableDictionary dictionary];
+    [side setValue:[NSNumber numberWithInteger:[value sideForAlphabetType:MBAlphabetTypeLatin]] forKey:@"latin"];
+    [side setValue:[NSNumber numberWithInteger:[value sideForAlphabetType:MBAlphabetTypeArabic]] forKey:@"arabic"];
+    [side setValue:[NSNumber numberWithInteger:[value sideForAlphabetType:MBAlphabetTypeCyrillic]] forKey:@"cyrillic"];
+    [side setValue:[NSNumber numberWithInteger:[value sideForAlphabetType:MBAlphabetTypeGreek]] forKey:@"greek"];
+    [dict setValue:side forKey:@"side"];
+    
+    return dict;
+}
+
++(NSNumber *)serializeMBSide:(MBSide) value {
+    if (value == MBSideNone) {
+        return nil;
+    }
+    return [NSNumber numberWithLong:value - 1];
+}
+
++(NSMutableArray<NSDictionary *> *) serializeDependentInfo:(NSArray<MBDependentInfo *>*)dependentInfos {
+    
+    NSMutableArray<NSDictionary *> * jsonDependentInfos = [[NSMutableArray alloc] init];
+
+    for (MBDependentInfo *dependentInfo in dependentInfos) {
+        NSDictionary *jsonDependentInfo =
+        @{
+            @"dateOfBirth": [MBBlinkIDSerializationUtils serializeMBDateResult:(dependentInfo.dateOfBirth)],
+            @"documentNumber": [MBBlinkIDSerializationUtils serializeMBStringResult:(dependentInfo.documentNumber)],
+            @"sex": [MBBlinkIDSerializationUtils serializeMBStringResult:(dependentInfo.sex)],
+            @"fullName": [MBBlinkIDSerializationUtils serializeMBStringResult:(dependentInfo.fullName)],
+            @"empty":[NSNumber numberWithBool:dependentInfo.empty]
+        };
+        [jsonDependentInfos addObject:jsonDependentInfo];
+    }
+    
+    return jsonDependentInfos;
+}
++ (BOOL)isNotNullandNil:(NSNumber *)value {
+    return ![value isEqual:[NSNull null]] && (value != nil);
 }
 
 @end

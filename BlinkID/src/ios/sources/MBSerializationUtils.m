@@ -9,33 +9,14 @@
 
 @implementation MBSerializationUtils
 
-+(NSDictionary *) serializeDay:(NSInteger)day month:(NSInteger)month year:(NSInteger)year {
++ (NSDictionary *)serializeMBDate:(MBDate *) date {
     return @{
-      @"day" : [NSNumber numberWithInteger:day],
-      @"month" : [NSNumber numberWithInteger:month],
-      @"year" : [NSNumber numberWithInteger:year]
+        @"day" : @(date.day),
+        @"month" : @(date.month),
+        @"year" : @(date.year),
+        @"originalDateString" : date.originalDateString,
+        @"isFilledByDomainKnowledge" : [NSNumber numberWithBool:date.isFilledByDomainKnowledge],
     };
-}
-
-+(NSDictionary *) serializeNSDate:(NSDate*) value {
-    NSDateComponents *components = [[NSCalendar currentCalendar] components:NSCalendarUnitDay | NSCalendarUnitMonth | NSCalendarUnitYear fromDate:value];
-    return [MBSerializationUtils serializeDay:components.day month:components.month year:components.year];
-}
-
-+ (NSDictionary *)serializeMBDateResult:(MBDateResult *) value {
-    NSMutableDictionary *dict = [MBSerializationUtils serializeDay:value.day month:value.month year:value.year].mutableCopy;
-    [dict setValue:[MBSerializationUtils serializeMBStringResult:value.originalDateStringResult] forKey:@"originalDateStringResult"];
-    return dict;
-}
-
-+ (NSDictionary *)serializeMBStringResult:(MBStringResult *) value {
-    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
-    [dict setValue:[value valueForAlphabetType:MBAlphabetTypeLatin] forKey:@"latin"];
-    [dict setValue:[value valueForAlphabetType:MBAlphabetTypeArabic] forKey:@"arabic"];
-    [dict setValue:[value valueForAlphabetType:MBAlphabetTypeCyrillic] forKey:@"cyrillic"];
-    [dict setValue:value.description forKey:@"description"];
-    
-    return dict;
 }
 
 +(NSString *) encodeMBImage:(MBImage * _Nullable) image {
@@ -63,6 +44,19 @@
         @"lowerLeft" : [MBSerializationUtils serializeCGPoint:quad.lowerLeft],
         @"lowerRight" : [MBSerializationUtils serializeCGPoint:quad.lowerRight]
     };
+}
+
++(NSDictionary *)serializeCGRect:(CGRect) rect {
+    NSDictionary *rectDictionaty = [NSDictionary new];
+    if (!CGRectIsNull(rect)) {
+      rectDictionaty =  @{
+            @"x" : [NSNumber numberWithFloat:rect.origin.x],
+            @"y" : [NSNumber numberWithFloat:rect.origin.y],
+            @"height": [NSNumber numberWithFloat:rect.size.height],
+            @"width": [NSNumber numberWithFloat:rect.size.width],
+        };
+    }
+    return rectDictionaty;
 }
 
 @end
